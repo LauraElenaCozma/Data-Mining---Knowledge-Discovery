@@ -1,0 +1,658 @@
+---
+title: "Regresie liniara clasica"
+author: "Cozma Laura-Elena,\n Iamandii Ana-Maria,\n Manolache Andrei"
+output: 
+  slidy_presentation:
+    css: style.css
+---
+
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(include = TRUE, echo = TRUE)
+```
+
+## Cuprins
+
+#### I. Regresia liniara simpla
+
+#### II. Regresia liniara multipla
+
+#### III. Selectarea și cercetarea modelelor de regresii liniare
+
+## I. Regresia liniara simpla
+
+Regresia liniara simpla este o metoda statistica prin care se descrie **relatia dintre doua variabile**:
+
+- Variabila **independenta**, de obicei notata cu X, numita **variabila explicativa** sau **predictor**
+- Variabila continua **dependenta** rezultata, notata cu Y, numita **variabila raspuns**.
+
+
+## 1. Definirea modelului
+
+$$
+Y|X= \beta_0 + \beta_1X + \epsilon
+$$
+
+####  Parametrii modelului:
+
+- X - **predictorul**
+- Y - **variabila dependenta**
+- $\beta_0$ - **interceptorul** 
+- $\beta_1$ - **panta** 
+- $\epsilon$ - **reziduul** 
+
+## 2. Implementarea modelului de regresie liniara
+
+- Setul de date ***survey*** din ***MASS package***
+
+```{r echo=FALSE}
+library(MASS)
+data(survey)
+head(survey)
+```
+
+- Reprezentarea grafica a datelor
+```{r echo=FALSE, fig.align="center"}
+plot(survey$Height~survey$Wr.Hnd,xlab="Intinderea palmei (cm)", ylab="Inaltime (cm)",
+     sub = "Graficul relatiei dintre inaltimea si intinderea palmei studentilor analizati in setul de date")
+```
+
+
+## 3. Estimarea coeficientilor
+
+- Estimarea parametrilor se face folosind functia **lm**
+
+```{r}
+survfit <- lm(Height~Wr.Hnd,data=survey)
+survfit
+```
+
+
+- Ecuatia modelului estimat
+
+$$
+\hat{y} = 113.954 + 3.117x
+$$
+
+- Graficul observatiilor din setul de date, impreuna cu dreapta determinata de ecuatia modelului de regresie si reziduurile
+
+```{r echo=FALSE, fig.align="center"}
+plot(survey$Height~survey$Wr.Hnd,xlab="Intinderea mainii (cm)", ylab="Inaltime (cm)",
+     sub = "Linia regresiei liniare simple, erorile de estimare si graficul datelor din survey ")
+abline(survfit,lwd=2)
+
+obsA <- c(survey$Wr.Hnd[197],survey$Height[197])
+obsB <- c(survey$Wr.Hnd[154],survey$Height[154])
+mycoefs <- coef(survfit)
+resid <- mycoefs[1]
+fitted <- mycoefs[2]
+
+segments(x0 = c(obsA[1], obsB[1]), y0 = resid + fitted * c(obsA[1], obsB[1]), x1 = c(obsA[1], obsB[1]), y1 = c(obsA[2], obsB[2]), lty=2)
+```
+
+
+
+## 4. Inferenta statistica
+
+- Problema: Exista o dovada statistica care sa sustina prezenta unei relatii intre predictor si raspuns?
+
+
+- Solutie: metoda **summary**
+
+```{r}
+summary(survfit)
+```
+
+
+
+## 5. Predictia valorilor
+
+Calculam predictiile inaltimilor pentru intinderea palmei de 14.5 cm, respectiv 24 cm.
+
+```{r echo=FALSE, fig.align="center"}
+xvals <- data.frame(Wr.Hnd=c(14.5,24))
+mypred.ci <- predict(survfit,newdata=xvals,interval="confidence",level=0.95)
+mypred.ci
+
+
+plot(survey$Height~survey$Wr.Hnd,xlim=c(13,24),ylim=c(140,205),
+xlab="Latimea palmei (cm)",ylab="Inaltimea (cm)")
+abline(survfit,lwd=2)
+points(xvals[,1],mypred.ci[,1],pch=8)
+
+```
+
+
+### **Interpolarea si Extrapolarea**
+
+**Interpolare** - cand valoarea x a predictorului se afla in intervalul datelor observate
+
+**Extrapolare** - x este in exteriorul intervalului
+
+x = 14.5 - interpolare
+
+y = 24   - extrapolare
+
+
+
+## 6. Regresie liniara simpla folosind un predictor categoric
+
+Variabila categorica este o variabila care poate lua un numar fix de posibile valori, fiecare reprezentand un grup sau o categorie.
+
+
+
+### Variabile binare: k = 2
+
+
+- Ecuatia modelului de regresie
+
+$$Y|X=\beta_0 + \beta_1X + \epsilon$$
+
+- $\beta_0$ - **baseline** sau **referinta** 
+      $X = 0 => Y = \beta_0 + \epsilon$
+      
+- $\beta_1$ - **efectul aditiv** 
+      $X = 1 => Y = \beta_0 + \beta_1 + \epsilon$
+
+
+## 7. **Reprezentare grafica**
+
+Se folosesc variabilele Height si Sex din setul de date **survey**
+
+```{r echo=FALSE, fig.align="center"}
+plot(survey$Height~survey$Sex, xlab = "Sex", ylab="Inaltime (cm)", sub="Graficul relatiei dintre inaltime studentilor si categoria in care se afla: Female sau Male")
+points(survey$Height~as.numeric(survey$Sex),cex=0.5)
+means.sex <- tapply(survey$Height,INDEX=survey$Sex,FUN=mean,na.rm=TRUE)
+points(1:2,means.sex,pch=4,cex=2)
+```
+
+
+## 8. **Estimarea coeficientilor**
+
+Se face cu ajutorul functiei **lm**:
+
+```{r}
+survfit2 <- lm(Height~Sex,data=survey)
+summary(survfit2)
+```
+
+Ecuatia regresiei:
+
+$$
+\hat{y} = 165.687 + 13.139x
+$$
+
+
+- $\beta_0$ - valoarea inaltimii medii estimate in cazul in care studentul are genul feminin (x = 0). 
+
+- $\beta_1$ - raportat ca SexMale, 13.139 este diferenta in inaltime care este adaugata in cazul genului masculin (x = 1)
+
+
+### **Predictia modelului**
+
+- Observatiile alese
+
+```{r echo=FALSE}
+extra.obs <- factor(c("Female","Male","Male","Male","Female"))
+extra.obs
+```
+
+- Predictia rezultatelor
+```{r}
+predict(survfit2,newdata=data.frame(Sex=extra.obs),interval="confidence", level=0.9)
+```
+
+
+
+
+## 9. **Variabile cu nivel multiplu: k > 2**
+
+- Predictorul va avea urmatoarea reprezentare:
+
+$$
+X_{(1)} = 0,1; X_{(2)} = 0,1; X_{(3)} = 0,1; ...; X_{(k)} = 0,1  
+$$
+
+- Formula modelului de regresie liniara pentru un predictor categoric
+
+$$
+\hat{y} = \hat{\beta_0} + \hat{\beta_1}X_{(2)} + \hat{\beta_2}X_{(3)} + . . . + \hat{\beta}_{k-1}X_{(k)}
+$$
+
+
+- Exemplu:
+
+In cazul in care categoria aleasa este 3, $X_{(3)} = 1$, toate celelalte sunt 0.
+
+Ecuatia devine: $\hat{y} = \hat{\beta_0} + \hat{\beta_2}$.
+
+## 10. Regresia liniara pentru variabile cu nivel multiplu folosind R
+
+- Reprezentare grafica - se vor folosi variabilele Height si Smoke (frecventa fumatului) din survey 
+
+```{r echo=FALSE, fig.align="center"}
+boxplot(Height~Smoke,data=survey)
+points(1:4,tapply(survey$Height,survey$Smoke,mean,na.rm=TRUE),pch=4)
+```
+
+- Predictia coeficientilor
+
+```{r}
+survfit3 <- lm(Height~Smoke,data=survey)
+summary(survfit3)
+```
+
+- Predictia valorilor pentru cele 4 categorii:
+
+```{r echo=FALSE}
+one.of.each <- factor(levels(survey$Smoke))
+one.of.each
+predict(survfit3,newdata=data.frame(Smoke=one.of.each),
+interval="confidence",level=0.95)
+```
+
+<!-- ## 11. **Tratarea variabilelor categorice ca variabile numerice** -->
+
+<!-- Se vor folosi variabilele mpg (kilometraj) si cyl (numar de cilindri, variabila categorica) din setul de date mtcars -->
+
+
+<!-- - Determinarea coeficientilor: -->
+
+<!-- ```{r echo=FALSE} -->
+<!-- carfit <- lm(mpg~cyl,data=mtcars) -->
+<!-- summary(carfit) -->
+<!-- ``` -->
+
+<!-- - Ecuatia modelului este: -->
+
+<!-- $$ -->
+<!-- \hat{y} = 37.88 - 2.88x -->
+<!-- $$ -->
+
+
+<!-- Diferentele reprezentarilor grafice: -->
+
+
+<!-- ```{r echo=FALSE, fig.align="center"} -->
+<!-- par(mfrow=c(1,2)) -->
+<!-- boxplot(mtcars$mpg~mtcars$cyl,xlab="Cilindri",ylab="MPG") -->
+<!-- plot(mtcars$mpg~mtcars$cyl,xlab="Cilindri",ylab="MPG") -->
+<!-- abline(carfit,lwd=2) -->
+<!-- ``` -->
+
+<!-- **Avantaje**: -->
+
+<!-- - **Interpolare** - se poate evalua valoarea medie MPG pentru o masina cu 5 cilindri. -->
+<!-- - **Aflarea unui numar mai mic de parametri** - doar panta in locul a k-1 coeficienti. -->
+
+<!-- **Dezavantaje**: -->
+
+<!-- - **Nu** se primesc informatiile la **nivel de grup** -->
+<!-- - Raspunsul mediu corespunzator fiecarei categorii **poate sa nu fie reprezentat bine** cu abordarea continua -->
+
+## II. Regresia liniara multipla
+
+Regresia liniara multipla este o generalizare directa a modelelor cu un singur predictor discutate pana acum. Aceasta permite modelarea variabilei de raspuns in functie de mai multi predictori, astfel incat sa se poate observa efectul variabilelor explicative asupra variabilei de raspuns.
+
+## 1. Terminologie
+
+-   **Variabila lurking**: influenteaza raspunsul, alt predictor sau ambele, dar nu este inclusa intr-un model de predictie. 
+-   **Confounding**: Prezenta unei variabile lurking poate duce la concluzii false despre relatiile de cauzalitate dintre raspuns si alt predictor sau poate masca o asociere cauza-efect adevarata. Aceasta eroare se numeste confounding.
+
+## 2. Formula
+
+$$
+Y = \beta_0 + \beta_1\ X_1 + \beta_2\ X_2 + ... + \beta_p\ X_p + \epsilon
+$$
+
+$$
+\epsilon \sim N(0,\sigma^2)
+$$\
+\
+unde $$
+ \beta_0, \beta_1, \beta_2,  ... \beta_p\
+$$
+
+sunt coeficientii regresiei
+
+## **3. Reprezentare cu matrici**
+
+$$
+Y = X \beta+ \epsilon
+$$
+
+
+$$
+Y=\begin{bmatrix}
+  y_{1} \\
+  y_{2} \\
+  \vdots \\
+  y_{n} \\
+\end{bmatrix}
+$$
+$$
+X=\begin{bmatrix}
+    1 & x_{1,1} & \dots  & x_{p,1} \\
+    1 & x_{1,2} & \dots  & x_{p,2} \\
+    \vdots & \vdots & \ddots & \vdots \\
+    1 & x_{1,n}  & \dots  & x_{p,n}
+\end{bmatrix}
+$$
+
+
+$$
+\epsilon=\begin{bmatrix}
+  \epsilon_{1} \\
+  \epsilon_{2} \\
+  \vdots \\
+  \epsilon_{n} \\
+\end{bmatrix}
+$$
+
+$$
+\beta=\begin{bmatrix}
+  \beta_{1} \\
+  \beta_{2} \\
+  \vdots \\
+  \beta_{n} \\
+\end{bmatrix}
+$$
+
+## **Implementare si interpretare**
+
+```{r}
+survmult <- lm(Height~Wr.Hnd+Sex,data=survey)
+summary(survmult)
+```
+
+## **5. Interpretarea efectelor marginale**
+
+In regresia multipla, estimarea fiecarui predictor ia in considerare efectul tuturor celorlaltor  predictori prezenti in model. In cazul nostru, pentru studentii de acelasi sex, cresterea de 1 cm in intinderea palmei conduce la o crestere estimata de 1.5944 cm in inaltimea medie.
+
+Pentru studentii cu intinderea palmei similara, barbatii in medie vor fi cu 9.4898 cm mai inalti decat femeile. 
+
+Se observa astfel utilitatea regresiei multiple. In acest exemplu, daca folosim doar regresia liniara simpla, rezultatul este inselator, deoarece o parte din variatia inaltimii este determinata de sex, in timp ce alta este atribuita intinderii palmei.
+
+## **Interpretarea efectelor marginale**
+
+Modelul poate fi exprimat in urmatorul mod:
+
+\
+***Mean height*** = 137.687 + 1.594 × ***handspan*** + 9.49 × ***sex***
+
+## **6. Vizualizarea modelului**
+
+```{r}
+survcoefs <- coef(survmult)
+survcoefs
+as.numeric(survcoefs[1]+survcoefs[3])
+```
+
+Poate fi scris ca 2 ecuatii, una pentru femei si una pentru barbati:
+
+-   *Ecuatia pentru femei:*
+
+***Mean height*** = 137.687 + 1.594 × ***handspan***
+
+-   *Ecuatia pentru barbati:*
+
+***Mean height*** = (137.687 + 9.4898) + 1.594 × ***handspan*** = 147.177 + 1.594 × ***handspan***
+
+## **Vizualizarea modelului**
+
+```{r, fig.align="center"}
+survcoefs <- coef(survmult)
+plot(survey$Height~survey$Wr.Hnd,
+        col=c("gray","black")[as.numeric(survey$Sex)],
+        pch=16,xlab="Writing handspan",ylab="Height")
+abline(a=survcoefs[1],b=survcoefs[2],col="gray",lwd=2)
+abline(a=survcoefs[1]+survcoefs[3],b=survcoefs[2],col="black",lwd=2)
+legend("topleft",legend=levels(survey$Sex),col=c("gray","black"),pch=16)
+```
+
+## **7. Predictie pornind de la un model de regresie liniara multipla**
+Ca exemplu, folosind modelul pentru inaltimea unui student ca functie liniara de handspan si sex, putem estima inaltimea medie a unui student de sex masculin cu o intindere a palmei de 16.5 cm, impreuna cu un interval de incredere.
+
+```{r}
+predict(survmult,newdata=data.frame(Wr.Hnd=16.5,Sex="Male"),
+           interval="confidence",level=0.95)
+
+predict(survmult,newdata=data.frame(Wr.Hnd=13,Sex="Female"),
+           interval="prediction",level=0.99)
+```
+
+
+## **8. Transformarea variabilelor numerice**
+
+**Transformarea numerica** se refera la aplicarea unei functii matematice asupra valorilor numerice pentru a le redimensiona. Exemplu: radacina patrata a unui numar sau transformarea din Fahrenheit in Celsius.
+
+-   ***transformare polinomiala***
+
+-   ***transformare logaritmica***
+
+## **Transformare polinomiala**
+
+```{r, fig.align="center"}
+x <- seq(-4,4,length=50) 
+y<-x
+y2<-x+x^2
+y3<-x+x^2+x^3
+
+plot(x,y,type="l", sub="Functie liniara")
+plot(x,y2,type="l", sub="Functie patratica")
+plot(x,y3,type="l", sub="Functie cubica")
+```
+
+## **Transformare polinomiala**
+
+\
+Folosim setul de date ***mtcars***, pentru care consideram variabila ***disp***, care descrie volumul deplasarii motorului in inch cubi si variabila de raspuns ***mile per galon***.
+
+```{r, fig.align="center"}
+plot(mtcars$disp,mtcars$mpg,xlab="Displacement (cu. in.)",ylab="MPG")
+```
+
+## a) Regresie liniara simpla
+
+```{r}
+car.order1 <- lm(mpg~disp,data=mtcars)
+summary(car.order1)
+```
+
+## b) Regresie liniara multipla
+
+```{r}
+car.order2 <- lm(mpg~disp+I(disp^2),data=mtcars)
+summary(car.order2)
+```
+
+## c) Regresie liniara multipla
+
+```{r}
+car.order3 <- lm(mpg~disp+I(disp^2)+I(disp^3),data=mtcars)
+summary(car.order3)
+```
+
+## d) Plot
+
+```{r, fig.align="center"}
+plot(mtcars$disp,mtcars$mpg,xlab="Displacement (cu. in.)",ylab="MPG")
+abline(car.order1)
+disp.seq <- seq(min(mtcars$disp)-50,max(mtcars$disp)+50,length=30)
+
+car.order2.pred <- predict(car.order2,newdata=data.frame(disp=disp.seq))
+lines(disp.seq,car.order2.pred,lty=2)
+
+
+car.order3.pred <- predict(car.order3,newdata=data.frame(disp=disp.seq))
+lines(disp.seq,car.order3.pred,lty=3)
+legend("topright",lty=1:3,
+          legend=c("order 1 (linear)","order 2 (quadratic)","order 3 (cubic)"))
+```
+
+
+
+## III.Selectarea și cercetarea modelelor de regresii liniare 
+
+### **1. Complexitate vs. Acuratete**
+Concepte esentiale in validarea modelelor de regresie liniara:
+  
+  * selectarea unui model potrivit analizei
+  * validarea ipotezelor de lucru
+  
+### **2. Principiul Parcimoniei**
+Urmareste obtinerea unui model de complexitate cat mai scazuta, dar fara a sacrifica prea mult din precizia modelului.
+
+## **3. Algoritmi de selectie a modelelor**
+
+### **3.1. Nested Comparasions: The Partial F-Test**
+
+Testul Partial F este o metoda de comparare dintre 2 modele, unde modelul mai putin complex este o versiune redusa a celuilalt.
+
+$$
+\hat{y}_{redu} = \hat{\beta_0} + \hat{\beta_{1}}\ x_1 + \hat{\beta_{2}}\ x_2 + ... + \hat{\beta_{p}}\ x_p
+$$
+$$
+\hat{y}_{full} = \hat{\beta_0} + \hat{\beta_{1}}\ x_1 + \hat{\beta_{2}}\ x_2 + ... + \hat{\beta_{p}}\ x_p + ... + \hat{\beta_{q}}\ x_q
+$$
+Scopul acestui test este de a verifica daca se va imbunatati dpdv statistic modelul prin obtinerea unui model mai complex prin adaugarea celor q-p variabile.
+
+```{r}
+library(MASS)
+data(survey)
+survmult <- lm(Height ~ Wr.Hnd + Sex, data = survey)
+survmult2 <- lm(Height ~ Wr.Hnd + Sex + Smoke, data = survey)
+anova(survmult, survmult2)
+```
+
+## **3.2. Forward Selection**
+
+Forward Selection porneste de la un model trivial, dupa care se executa o serie de teste pentru a vedea care variabila imbunatateste cel mai mult modelul. Acesta se actualizeaza si se repeta procesul pana cand nu mai exista termeni care sa perfectioneze semnificativ modelul.
+
+```{r}
+library(boot)
+
+nuc.0 <- lm(cost ~ 1, data = nuclear)
+summary(nuc.0)
+
+add1(nuc.0, scope = .~. + date + t1 + t2 + cap + pr +ne + ct + bw + cum.n + pt, test = "F")
+
+nuc.1 <- update(nuc.0, formula = .~. + date)
+summary(nuc.1)
+
+add1(nuc.1, scope = .~. + date + t1 + t2 +cap + pr + ne + ct + bw + cum.n + pt, test="F")
+
+nuc.2 <- update(nuc.1, formula = .~. + cap)
+summary(nuc.2)
+
+add1(nuc.2, scope = .~. + date + t1 + t2 + cap + pr + ne + ct + bw + cum.n + pt, test="F")
+
+nuc.3 <- update(nuc.2, formula = .~. + pt)
+summary(nuc.3)
+
+add1(nuc.3, scope = .~. + date + t1 + t2 + cap + pr + ne + ct + bw + cum.n + pt, test="F")
+
+nuc.4 <- update(nuc.3, formula = .~. + ne)
+summary(nuc.4)
+
+add1(nuc.4, scope = .~. + date + t1 + t2 + cap + pr + ne + ct + bw + cum.n + pt, test="F")
+```
+
+## **3.3. Backward Selection**
+Backward Selection are un comportament asemanator cu Forward Selection, cu exceptia faptului ca acesta porneste de la cel mai complex model si elimina succesiv cate o variabila. 
+
+```{r}
+nuc.0 <- lm(cost ~ date + t1 + t2 + cap + pr + ne + ct + bw + cum.n + pt, data = nuclear)
+
+drop1(nuc.0, test = "F")
+
+nuc.1 <- update(nuc.0, .~. - bw)
+
+drop1(nuc.1, test = "F")
+
+nuc.2 <- update(nuc.1, .~. - pt)
+
+drop1(nuc.2, test = "F")
+
+nuc.3 <- update(nuc.2, .~. - t1)
+
+drop1(nuc.3, test = "F")
+
+nuc.4 <- update(nuc.3, .~. - ct)
+
+drop1(nuc.4, test="F")
+```
+
+## **3.4. Stepwise AIC Selection**
+
+Acest algoritm le combina pe cele precedente, astfel ca la fiecare pas, o variabila poate fi adaugata sau eliminata din modelul curent.
+
+$$ AIC = -2L + 2(p + 2) $$
+
+```{r}
+car.null <- lm(mpg ~ 1, data = mtcars)
+car.step <- step(car.null, scope = .~. + wt * hp * factor(cyl) * disp + am 
+                 + factor(gear) + drat + vs + qsec + carb)
+
+summary(car.step)
+```
+
+## **4.Interpretarea datelor**
+
+Este important sa se investigheze orice observatie care pare neobisnuita sau extrema in comparatie cu restul setului de date. Se definesc termenii:
+
+1. **Valoare aberanta** (outlier) - observatie care arata neobisnuit in contextul unui set de date
+1. **Punct parghie** (leverage) - o observatie a carei valoare x este neobisnuita, dar a carei valoare prezisa y  se conformeaza cu trendul si urmeaza linia de regresie prezisa.
+1. **Valoare influenta** (influence) - o observatie cu un efect de levier mare si care, in consecinta, afecteaza linia de regresie
+
+```{r, fig.align="center"}
+x <- c(1.1, 1.3, 2.3, 1.6, 1.2, 0.1, 1.8, 1.9, 0.2, 0.75)
+y <- c(6.7, 7.9, 9.8, 9.3, 8.2, 2.9, 6.6, 11.1, 4.7, 3)
+p1x <- 1.2
+p1y <- 14
+p2x <- 5
+p2y <- 19
+p3x <- 5
+p3y <- 5
+
+mod.0 <- lm(y~x)
+mod.1 <- lm(c(y, p1y) ~ c(x, p1x))
+mod.2 <- lm(c(y, p2y) ~ c(x, p2x))
+mod.3 <- lm(c(y, p3y) ~ c(x, p3x))
+
+plot(x, y, xlim = c(0, 5), ylim = c(0, 20))
+points(p1x, p1y, pch = 15, cex = 1.5)
+abline(mod.0)
+abline(mod.1, lty = 2)
+text(2.4, 1, labels = "Valoare aberanta(outlier), efect de levier(leverage) mic, influenta mica", cex = 1.1)
+
+plot(x, y, xlim = c(0, 5), ylim = c(0, 20))
+points(p2x, p2y, pch = 15, cex = 1.5)
+abline(mod.0)
+abline(mod.2, lty = 2)
+text(2.4, 1, labels = "Nu este valoare aberanta(not outlier), efect de levier(leverage) mare, influenta mica", cex = 0.9)
+
+plot(x, y, xlim = c(0, 5), ylim = c(0, 20))
+points(p3x, p3y, pch = 15, cex = 1.5)
+abline(mod.0)
+abline(mod.3, lty = 2)
+text(2.4, 1, labels = "Valoare aberanta(outlier), efect de levier(leverage) mare, influenta mare", cex = 1.1)
+```
+
+### **5.Distanta Cook**
+
+O alta metrica importanta pentru determinarea gradului de influenta a unei observatii o reprezinta distanta Cook care estimeaza amploarea efectului de eliminare a observatiei i din modelul adaptat.
+
+$$D_{i} = \sum_{j=1}^{n} \frac{(\hat{y_{j}} - \hat{y_{j}}^{(-i)})^2}{(p+1)\hat{\sigma}^{2}}, \space \space \space \space  i,j=1, \dots ,n$$
+
+## **6.Combinarea metricilor prezentate**
+
+Pentru o mai buna intelegere a observatiilor si efectele pe care acestea le au asupra regresiilor liniare, metricile prezentate pot fi combinate intr-o singura reprezentare grafica.
+
+```{r, fig.align="center"}
+plot(mod.1, which = 5, add.smooth = FALSE, cook.levels = c(4 / 11, 0.5, 1))
+plot(mod.2, which = 5, add.smooth = FALSE, cook.levels = c(4 / 11, 0.5, 1))
+plot(mod.3, which = 5, add.smooth = FALSE, cook.levels = c(4 / 11, 0.5, 1))
+
+```
+
